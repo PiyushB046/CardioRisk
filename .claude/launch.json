@@ -1,0 +1,1 @@
+{"version": "0.0.1", "configurations": [{"name": "cardiorisk", "runtimeExecutable": ".venv/bin/uvicorn", "runtimeArgs": ["api.main:app", "--port", "8000"], "port": 8000}]}

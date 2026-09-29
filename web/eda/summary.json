@@ -1,0 +1,37 @@
+{
+  "rows": 918,
+  "positive_rate": 0.5534,
+  "by_site": {
+    "Cleveland": {
+      "rows": 303,
+      "positive_rate": 0.4587
+    },
+    "Hungary": {
+      "rows": 293,
+      "positive_rate": 0.3618
+    },
+    "Switzerland": {
+      "rows": 123,
+      "positive_rate": 0.935
+    },
+    "VA Long Beach": {
+      "rows": 199,
+      "positive_rate": 0.7437
+    }
+  },
+  "top_correlations_with_target": {
+    "thal": 0.499,
+    "cp": 0.471,
+    "exang": 0.462,
+    "ca": 0.456,
+    "thalach": 0.393,
+    "oldpeak": 0.386
+  },
+  "plots": [
+    "class_balance.png",
+    "missingness.png",
+    "distributions.png",
+    "categorical_rates.png",
+    "correlation.png"
+  ]
+}

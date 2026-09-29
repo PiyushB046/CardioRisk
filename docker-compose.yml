@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: heart
+      POSTGRES_PASSWORD: heart
+      POSTGRES_DB: heart_disease
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U heart -d heart_disease"]
+      interval: 3s
+      retries: 20
+  app:
+    build: .
+    ports: ["${APP_PORT:-8000}:8000"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://heart:heart@db:5432/heart_disease
+    depends_on:
+      db: { condition: service_healthy }
+volumes:
+  pgdata:

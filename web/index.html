@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CardioRisk</title>
+  <script>
+    // Apply theme before paint to avoid a flash.
+    try {
+      const t = localStorage.getItem("theme");
+      if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) document.documentElement.classList.add("dark");
+    } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="#/home" class="brand focus-ring">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" class="ring" /><path d="M12 18s-5-3.1-5-6.6A2.8 2.8 0 0 1 12 9.9a2.8 2.8 0 0 1 5 1.5C17 14.9 12 18 12 18z" class="heart" /><circle cx="12" cy="2" r="1.6" class="orbit-dot" /></svg>
+        </span>
+        CardioRisk
+      </a>
+      <nav class="links" id="links">
+        <a href="#/predict" data-route="predict">Predict</a>
+        <a href="#/performance" data-route="performance">Performance</a>
+        <a href="#/data" data-route="data">Data</a>
+        <a href="#/history" data-route="history">History</a>
+        <a href="/docs" target="_blank" rel="noopener">API</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="icon-btn focus-ring" id="theme" aria-label="Toggle theme">
+          <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+          <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+        </button>
+        <a href="#/predict" class="btn btn-primary btn-sm focus-ring">Check risk <span class="arrow">→</span></a>
+        <button class="icon-btn menu-btn focus-ring" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16" /></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section class="view" data-view="home">
+      <div class="hero dot-grid">
+        <div class="wrap">
+          <span class="pill reveal"><span class="live"></span>Live model · <span id="heroModel" class="mono">loading</span></span>
+          <h1 class="reveal">Know the risk<br /><span class="accent-ink">before the diagnosis.</span></h1>
+          <p class="lede reveal">A heart-disease risk model trained on 918 patients from four hospitals. Enter a patient's clinical
+            data and get a calibrated probability, and see exactly which factors drove it. No inflated numbers, no leakage.</p>
+          <div class="cta-row reveal">
+            <a href="#/predict" class="btn btn-primary focus-ring">Run a prediction <span class="arrow">→</span></a>
+            <a href="#/performance" class="btn btn-ghost focus-ring">See how it's measured</a>
+          </div>
+          <div class="checks reveal">
+            <span><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" /></svg>Leakage-free evaluation</span>
+            <span><svg viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4" /></svg>SHAP explanation per patient</span>
+            <span><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3" /><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" /></svg>Every prediction stored in PostgreSQL</span>
+          </div>
+          <div class="stats reveal" id="heroStats">
+            <div class="stat"><b class="mono skeleton" data-count>&nbsp;</b><span>test accuracy</span></div>
+            <div class="stat"><b class="mono skeleton" data-count>&nbsp;</b><span>ROC-AUC</span></div>
+            <div class="stat"><b class="mono skeleton" data-count>&nbsp;</b><span>sensitivity (recall)</span></div>
+            <div class="stat"><b class="mono skeleton" data-count>&nbsp;</b><span>patients in training data</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="wrap section">
+        <p class="eyebrow reveal">How it works</p>
+        <h2 class="reveal">Three quiet steps.<br /><span class="muted-ink">One honest number.</span></h2>
+        <p class="sub reveal">From a clinical form to an explained probability in under a second.</p>
+        <div class="steps">
+          <div class="step card reveal"><span class="num mono">01</span><h3>Enter clinical data</h3><p>Age, chest-pain type, ECG, exercise test and fluoroscopy results. Unknown fields are allowed; the model was trained with missing data.</p></div>
+          <div class="step card reveal"><span class="num mono">02</span><h3>The model scores it</h3><p>A tuned RBF-SVM, chosen from seven candidates by repeated 5×5 cross-validation, returns a probability of heart disease.</p></div>
+          <div class="step card reveal"><span class="num mono">03</span><h3>Understand why</h3><p>XGBoost SHAP contributions show which factors pushed the risk up or down for this specific patient.</p></div>
+        </div>
+      </div>
+
+      <div class="wrap section">
+        <p class="eyebrow reveal">Model comparison</p>
+        <h2 class="reveal">Honest scores.<br /><span class="muted-ink">No hidden leakage.</span></h2>
+        <p class="sub reveal">Every candidate is scored on identical cross-validation folds of the training set. The test set stays untouched until the final check.</p>
+        <div class="card table-card reveal">
+          <table class="tbl" id="homeCmp"><thead><tr><th>Model</th><th>CV accuracy</th><th>ROC-AUC</th><th>Recall</th><th></th></tr></thead>
+            <tbody><tr><td colspan="5"><div class="skeleton line"></div><div class="skeleton line"></div><div class="skeleton line"></div></td></tr></tbody></table>
+        </div>
+      </div>
+
+      <div class="wrap section">
+        <p class="eyebrow reveal">Trust &amp; method</p>
+        <h2 class="reveal">Quiet in the UI.<br /><span class="muted-ink">Rigorous underneath.</span></h2>
+        <div class="trust">
+          <div class="card reveal"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg><h3>Locked test set</h3><p>A stratified 20% hold-out that is never used for tuning or model selection.</p></div>
+          <div class="card reveal"><svg viewBox="0 0 24 24"><path d="M4 20L20 4M4 4h6M14 20h6" /></svg><h3>Calibrated</h3><p>A Brier score of 0.105. A predicted 70% means about 70% of those patients really have the disease.</p></div>
+          <div class="card reveal"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h6" /></svg><h3>Explainable</h3><p>Per-feature contributions for every single prediction, not just global importance.</p></div>
+          <div class="card reveal"><svg viewBox="0 0 24 24"><path d="M12 8v4l3 2" /><circle cx="12" cy="12" r="9" /></svg><h3>Full audit trail</h3><p>Inputs, probability and model version for every prediction, stored in PostgreSQL.</p></div>
+        </div>
+        <p class="badges reveal">UCI Heart Disease · Cleveland · Hungary · Switzerland · VA Long Beach · scikit-learn · XGBoost · Optuna</p>
+      </div>
+
+      <div class="wrap section">
+        <div class="cta card reveal dot-grid">
+          <p class="eyebrow">Start now</p>
+          <h2>The data is already in the chart.<br /><span class="muted-ink">Put it to work.</span></h2>
+          <div class="cta-row"><a href="#/predict" class="btn btn-primary focus-ring">Run a prediction <span class="arrow">→</span></a><a href="#/data" class="btn btn-ghost focus-ring">Explore the data</a></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PREDICT -->
+    <section class="view" data-view="predict">
+      <div class="wrap page">
+        <div class="page-head"><p class="eyebrow">Predict</p><h1 class="h-page">Patient risk assessment</h1>
+          <p class="sub">Fill in every field you can. Unknown values are allowed but reduce reliability.</p></div>
+        <div class="grid-predict">
+          <form id="form" class="card form" autocomplete="off">
+            <fieldset><legend>Demographics</legend>
+              <div class="fields">
+                <label>Age <input name="age" type="number" min="1" max="120" required value="54" /></label>
+                <label>Sex <div class="seg" data-name="sex"><button type="button" data-v="1" class="on">Male</button><button type="button" data-v="0">Female</button></div></label>
+              </div></fieldset>
+            <fieldset><legend>Symptoms &amp; vitals</legend>
+              <div class="fields">
+                <label>Chest pain type <select name="cp"><option value="1">Typical angina</option><option value="2">Atypical angina</option><option value="3">Non-anginal pain</option><option value="4" selected>Asymptomatic</option></select></label>
+                <label>Resting BP <span class="unit">mm Hg</span><input name="trestbps" type="number" min="50" max="250" value="130" /></label>
+                <label>Cholesterol <span class="unit">mg/dl</span><input name="chol" type="number" min="80" max="700" value="240" /></label>
+                <label>Fasting blood sugar &gt; 120 <select name="fbs"><option value="">Unknown</option><option value="0" selected>No</option><option value="1">Yes</option></select></label>
+              </div></fieldset>
+            <fieldset><legend>ECG &amp; exercise test</legend>
+              <div class="fields">
+                <label>Resting ECG <select name="restecg"><option value="">Unknown</option><option value="0" selected>Normal</option><option value="1">ST-T abnormality</option><option value="2">LV hypertrophy</option></select></label>
+                <label>Max heart rate <span class="unit">bpm</span><input name="thalach" type="number" min="50" max="230" value="150" /></label>
+                <label>Exercise angina <select name="exang"><option value="">Unknown</option><option value="0" selected>No</option><option value="1">Yes</option></select></label>
+                <label>ST depression <span class="unit">oldpeak</span><input name="oldpeak" type="number" step="0.1" min="-3" max="7" value="1.0" /></label>
+                <label>ST slope <select name="slope"><option value="">Unknown</option><option value="1">Upsloping</option><option value="2" selected>Flat</option><option value="3">Downsloping</option></select></label>
+              </div></fieldset>
+            <fieldset><legend>Imaging</legend>
+              <div class="fields">
+                <label>Major vessels (0–3) <select name="ca"><option value="">Unknown</option><option value="0" selected>0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
+                <label>Thalassemia <select name="thal"><option value="">Unknown</option><option value="3" selected>Normal</option><option value="6">Fixed defect</option><option value="7">Reversible defect</option></select></label>
+              </div></fieldset>
+            <div class="form-actions">
+              <button type="button" class="btn btn-ghost focus-ring" id="sample">Load high-risk example</button>
+              <button type="submit" class="btn btn-primary focus-ring" id="submit"><span class="btn-label">Predict risk</span><span class="spinner"></span></button>
+            </div>
+            <p id="err" class="err" role="alert"></p>
+          </form>
+
+          <aside class="card result" id="result">
+            <div id="empty" class="empty">
+              <div class="pulse-heart"><svg viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z" /></svg></div>
+              <p>Enter patient data and run a prediction.</p>
+            </div>
+            <div id="out" hidden>
+              <p class="eyebrow">Estimated probability</p>
+              <div class="gauge">
+                <svg viewBox="0 0 200 112"><path d="M14 100 A86 86 0 0 1 186 100" class="track" /><path id="arc" d="M14 100 A86 86 0 0 1 186 100" class="fill" /></svg>
+                <div class="pct mono" id="pct">0%</div>
+              </div>
+              <div class="verdict" id="verdict"></div>
+              <div class="meta mono" id="meta"></div>
+              <div class="divider"></div>
+              <h3>Why this prediction</h3>
+              <p class="hint">SHAP contributions in log-odds. <span class="up">■</span> raises risk · <span class="down">■</span> lowers it.</p>
+              <div class="chartbox tall"><canvas id="shap"></canvas></div>
+            </div>
+          </aside>
+        </div>
+        <p class="disclaimer">Educational decision-support demo trained on the UCI Heart Disease dataset. Not a medical device.</p>
+      </div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section class="view" data-view="performance">
+      <div class="wrap page">
+        <div class="page-head"><p class="eyebrow">Performance</p><h1 class="h-page">Held-out test set</h1><p class="sub" id="perfSub">&nbsp;</p></div>
+        <div class="kpis" id="kpis">
+          <div class="kpi card"><div class="skeleton line"></div></div><div class="kpi card"><div class="skeleton line"></div></div>
+          <div class="kpi card"><div class="skeleton line"></div></div><div class="kpi card"><div class="skeleton line"></div></div>
+          <div class="kpi card"><div class="skeleton line"></div></div>
+        </div>
+        <div class="grid3">
+          <div class="card reveal"><h3>Confusion matrix</h3><div id="cm" class="cm"></div></div>
+          <div class="card reveal"><h3>ROC curve</h3><div class="chartbox"><canvas id="roc"></canvas></div></div>
+          <div class="card reveal"><h3>Calibration</h3><div class="chartbox"><canvas id="cal"></canvas></div></div>
+        </div>
+        <div class="grid2">
+          <div class="card reveal"><h3>Precision–recall curve</h3><div class="chartbox"><canvas id="pr"></canvas></div></div>
+          <div class="card reveal"><h3>XGBoost feature importance</h3><div class="chartbox"><canvas id="imp"></canvas></div></div>
+        </div>
+        <div class="card table-card reveal"><h3>Model comparison <span class="hint">repeated 5×5 stratified CV · mean ± std</span></h3>
+          <table class="tbl" id="cmp"><thead><tr><th>Model</th><th>Accuracy</th><th>ROC-AUC</th><th>F1</th><th>Recall</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- DATA -->
+    <section class="view" data-view="data">
+      <div class="wrap page">
+        <div class="page-head"><p class="eyebrow">Data</p><h1 class="h-page">UCI Heart Disease</h1><p class="sub" id="dataSub">&nbsp;</p></div>
+        <div class="kpis" id="siteKpis"></div>
+        <div class="grid2" id="edaPlots"></div>
+      </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="view" data-view="history">
+      <div class="wrap page">
+        <div class="page-head"><p class="eyebrow">History</p><h1 class="h-page">Recent predictions</h1><p class="sub">Every prediction is logged to PostgreSQL.</p></div>
+        <div class="card table-card"><table class="tbl" id="hist"><thead><tr><th>When</th><th>Age</th><th>Sex</th><th>Chest pain</th><th>Risk</th><th>Result</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot"><div class="wrap foot-inner"><span>CardioRisk · UCI Heart Disease</span><span class="mono">FastAPI · PostgreSQL · scikit-learn · XGBoost</span></div></footer>
+  <div class="toast" id="toast"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
